@@ -24,3 +24,5 @@ chip8-emulator
 
 .DS_Store
 Thumbs.db
+
+.cache/

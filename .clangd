@@ -1,0 +1,8 @@
+CompileFlags:
+  CompilationDatabase: cmake-build-debug
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - performance-*
