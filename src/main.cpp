@@ -1,3 +1,4 @@
+#include "internals.h"
 #include "raylib.h"
 
 int main() {

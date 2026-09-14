@@ -30,5 +30,7 @@ struct Chip8 final {
 
     Chip8();
     ~Chip8() = default;
+
+    void loadRom(const std::string& file);
 };
 
