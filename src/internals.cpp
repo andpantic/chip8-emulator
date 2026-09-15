@@ -5,7 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <sys/_types/_u_char.h>
+#include <utility>
 
 namespace {
     // each font is 4 pixels wide, 5 pixels tall
@@ -30,6 +30,7 @@ namespace {
 
     constexpr auto FONTS_ADDRESS{0x50};
     constexpr auto PROGRAM_ADDRESS{0x200};
+    auto LAST_INSTRUCTION{0x0};
 } // namespace
 
 void Chip8::loadRom(const std::string& file) {
@@ -44,6 +45,7 @@ void Chip8::loadRom(const std::string& file) {
         romFile.get(byte);
         _memory[byteAddress++] = byte;
     }
+    LAST_INSTRUCTION = byteAddress - 0x1;
     romFile.close();
 }
 
@@ -55,5 +57,12 @@ Chip8::Chip8() {
     }
     _programCounter = PROGRAM_ADDRESS;
     Chip8::loadRom("roms/IBM Logo.ch8");
+}
+
+instruction_t Chip8::fetchNextInstruction() {
+    instruction_t instruction =
+        std::make_pair(_memory[_programCounter], _memory[_programCounter + 1]);
+    _programCounter += 2;
+    return instruction;
 }
 

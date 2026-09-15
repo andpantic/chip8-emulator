@@ -4,9 +4,11 @@
 #include <cstdint>
 #include <stack>
 
+using instruction_t = std::pair<uint8_t, uint8_t>;
+
 struct Registers final {
     std::array<uint8_t, 16> vRegisters{};
-    uint16_t instructionReg{};
+    uint16_t indexRegister{};
 };
 
 struct Chip8 final {
@@ -18,6 +20,9 @@ struct Chip8 final {
         static Chip8 _instance;
         return _instance;
     }
+
+    instruction_t fetchNextInstruction();
+    void decodeAndExecute(instruction_t instruction);
 
   private:
     std::array<uint8_t, 4096> _memory{};
