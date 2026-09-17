@@ -5,7 +5,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <utility>
 
 namespace {
     // each font is 4 pixels wide, 5 pixels tall
@@ -30,7 +29,7 @@ namespace {
 
     constexpr auto FONTS_ADDRESS{0x50};
     constexpr auto PROGRAM_ADDRESS{0x200};
-    auto LAST_INSTRUCTION{0x0};
+
 } // namespace
 
 void Chip8::loadRom(const std::string& file) {
@@ -45,7 +44,7 @@ void Chip8::loadRom(const std::string& file) {
         romFile.get(byte);
         _memory[byteAddress++] = byte;
     }
-    LAST_INSTRUCTION = byteAddress - 0x1;
+    _instructionCount = (byteAddress - PROGRAM_ADDRESS) / 2;
     romFile.close();
 }
 
@@ -59,10 +58,44 @@ Chip8::Chip8() {
     Chip8::loadRom("roms/IBM Logo.ch8");
 }
 
-instruction_t Chip8::fetchNextInstruction() {
-    instruction_t instruction =
-        std::make_pair(_memory[_programCounter], _memory[_programCounter + 1]);
+uint16_t Chip8::fetchNextInstruction() {
+    uint16_t instruction{
+        static_cast<uint16_t>((_memory[_programCounter] << 8) | _memory[_programCounter + 1])};
     _programCounter += 2;
     return instruction;
+}
+
+void Chip8::decodeAndExecute(uint16_t instruction) {
+    const auto instructionCategory{(instruction & 0xF000) >> 12};
+    const auto x{(instruction & 0x0F00) >> 8};
+    const auto y{(instruction & 0x00F0) >> 4};
+    const auto n{instruction & 0x000F};
+    const auto nn{instruction & 0x00FF};
+    const auto nnn{instruction & 0x0FFF};
+    std::cout << "============================================\n";
+    std::cout << "Instruction: " << std::hex << static_cast<int>(instruction) << "\n";
+    std::cout << "Instruction category (first nibble): " << std::hex << instructionCategory << "\n";
+    std::cout << "X (second nibble): " << std::hex << x << "\n";
+    std::cout << "Y (third nibble): " << std::hex << y << "\n";
+    std::cout << "N (fourth nibble): " << std::hex << n << "\n";
+    std::cout << "NN (second byte): " << std::hex << nn << "\n";
+    std::cout << "NNN (second, third, fourth nibble): " << std::hex << nnn << "\n";
+    std::cout << "============================================\n";
+    switch (instructionCategory) {
+    case 0x0:
+        break;
+    case 0x1:
+        break;
+    case 0x6:
+        break;
+    case 0x7:
+        break;
+    case 0xA:
+        break;
+    case 0xD:
+        break;
+    default:
+        break;
+    }
 }
 

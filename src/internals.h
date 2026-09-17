@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <stack>
 
-using instruction_t = std::pair<uint8_t, uint8_t>;
-
 struct Registers final {
     std::array<uint8_t, 16> vRegisters{};
     uint16_t indexRegister{};
@@ -21,8 +19,11 @@ struct Chip8 final {
         return _instance;
     }
 
-    instruction_t fetchNextInstruction();
-    void decodeAndExecute(instruction_t instruction);
+    uint16_t fetchNextInstruction();
+    void decodeAndExecute(uint16_t instruction);
+    inline uint16_t getInstructionCount() {
+        return _instructionCount;
+    }
 
   private:
     std::array<uint8_t, 4096> _memory{};
@@ -32,6 +33,7 @@ struct Chip8 final {
     uint16_t _programCounter{};
     uint8_t _delayTimer{};
     uint8_t _soundTimer{};
+    uint16_t _instructionCount{};
 
     Chip8();
     ~Chip8() = default;

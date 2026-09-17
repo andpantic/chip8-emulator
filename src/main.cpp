@@ -9,6 +9,14 @@ int main() {
 
     SetTargetFPS(60);
 
+    // test
+    Chip8& chip8 = Chip8::getInstance();
+    const auto instructionCount{chip8.getInstructionCount()};
+    for (int i = 0; i < instructionCount; i++) {
+        uint16_t instruction = chip8.fetchNextInstruction();
+        chip8.decodeAndExecute(instruction);
+    }
+
     while (!WindowShouldClose()) {
         BeginDrawing();
 
