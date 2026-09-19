@@ -72,30 +72,57 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
     const auto n{instruction & 0x000F};
     const auto nn{instruction & 0x00FF};
     const auto nnn{instruction & 0x0FFF};
-    std::cout << "============================================\n";
-    std::cout << "Instruction: " << std::hex << static_cast<int>(instruction) << "\n";
-    std::cout << "Instruction category (first nibble): " << std::hex << instructionCategory << "\n";
-    std::cout << "X (second nibble): " << std::hex << x << "\n";
-    std::cout << "Y (third nibble): " << std::hex << y << "\n";
-    std::cout << "N (fourth nibble): " << std::hex << n << "\n";
-    std::cout << "NN (second byte): " << std::hex << nn << "\n";
-    std::cout << "NNN (second, third, fourth nibble): " << std::hex << nnn << "\n";
-    std::cout << "============================================\n";
     switch (instructionCategory) {
     case 0x0:
+        if (y == 0xE) {
+            if (n == 0) { // 00E0
+                _display = {0};
+            }
+        }
         break;
-    case 0x1:
+    case 0x1: // 1NNN
+        _programCounter = nnn;
         break;
-    case 0x6:
+    case 0x6: // 6XNN
+        _registers.vRegisters[x] = nn;
         break;
-    case 0x7:
+    case 0x7: // 7XNN
+        _registers.vRegisters[x] += nn;
         break;
-    case 0xA:
+    case 0xA: // ANNN
+        _registers.indexRegister = nnn;
         break;
-    case 0xD:
-        break;
+    case 0xD: // DXYN
+    {
+        const auto xCoord{_registers.vRegisters[x] % 64};
+        const auto yCoord{_registers.vRegisters[y] % 32};
+        _registers.vRegisters[0xF] = 0;
+        const auto spriteLocation{_registers.indexRegister};
+        for (auto i = xCoord; i < xCoord + 8; i++) {
+            if (i > 63)
+                break;
+            for (auto j = yCoord; j < yCoord + n; j++) {
+                if (j > 31)
+                    break;
+                std::bitset<8> spriteByte{_memory[spriteLocation + j - yCoord]};
+                const auto startState{_display[i][j]};
+                _display[i][j] = startState ^ spriteByte[i - xCoord];
+                if (startState == 1 && _display[i][j] == 0) {
+                    _registers.vRegisters[0xF] = 1;
+                }
+            }
+        }
+    } break;
     default:
         break;
     }
 }
 
+void Chip8::printDisplay() {
+    for (int i = 0; i < _display.size(); i++) {
+        for (int j = 0; j < _display[0].size(); j++) {
+            std::cout << _display[i][j] << " ";
+        }
+        std::cout << "\n";
+    }
+}

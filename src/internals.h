@@ -24,6 +24,7 @@ struct Chip8 final {
     inline uint16_t getInstructionCount() {
         return _instructionCount;
     }
+    void printDisplay();
 
   private:
     std::array<uint8_t, 4096> _memory{};
