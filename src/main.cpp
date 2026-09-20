@@ -1,29 +1,33 @@
 #include "internals.h"
 #include "raylib.h"
+#include <chrono>
+#include <thread>
 
 int main() {
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    constexpr int screenWidth{1280};
+    constexpr int screenHeight{640};
+    constexpr auto INSTRUCTIONS_PER_SECOND{800};
+    constexpr auto WAIT_NS = 1'000'000'000 / INSTRUCTIONS_PER_SECOND;
 
     InitWindow(screenWidth, screenHeight, "Chip-8");
 
     SetTargetFPS(60);
 
-    // test
     Chip8& chip8 = Chip8::getInstance();
     const auto instructionCount{chip8.getInstructionCount()};
-    for (int i = 0; i < instructionCount; i++) {
-        uint16_t instruction = chip8.fetchNextInstruction();
-        chip8.decodeAndExecute(instruction);
-    }
 
+    auto i{0};
     while (!WindowShouldClose()) {
         BeginDrawing();
 
         ClearBackground(BLACK);
 
-        DrawText("Hello Chip-8!", 190, 200, 52, WHITE);
-
+        if (i < instructionCount) {
+            uint16_t instruction = chip8.fetchNextInstruction();
+            chip8.decodeAndExecute(instruction);
+            std::this_thread::sleep_for(std::chrono::nanoseconds(WAIT_NS));
+            i++;
+        }
         EndDrawing();
     }
 
