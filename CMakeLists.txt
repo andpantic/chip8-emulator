@@ -21,14 +21,31 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
     endif()
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        DOWNLOAD_EXTRACT_TIMESTAMP OFF
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+FetchContent_MakeAvailable(googletest)
+
 # Our Project
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
-add_executable(${PROJECT_NAME} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+# Emulator logic, no raylib, no main. Shared by app and tests.
+add_library(chip8_core src/internals.cpp)
+target_include_directories(chip8_core PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_compile_features(chip8_core PUBLIC cxx_std_20)
+
+add_executable(${PROJECT_NAME} src/main.cpp)
 #set(raylib_VERBOSE 1)
-target_link_libraries(${PROJECT_NAME} raylib)
+target_link_libraries(${PROJECT_NAME} chip8_core raylib)
+
+# Tests
+enable_testing()
+add_executable(chip8_tests test/chip8_test.cpp)
+target_link_libraries(chip8_tests chip8_core GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(chip8_tests)
 
 # Web Configurations
 if (${PLATFORM} STREQUAL "Web")

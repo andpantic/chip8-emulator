@@ -125,9 +125,9 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
                 if (j > 0x1F)
                     break;
                 std::bitset<8> spriteByte{_memory[spriteLocation + j - yCoord]};
-                const auto startState{_display[i][j]};
-                _display[i][j] = startState ^ spriteByte[7 - (i - xCoord)];
-                if (startState == 1 && _display[i][j] == 0) {
+                const auto startState{_display[j][i]};
+                _display[j][i] = startState ^ spriteByte[7 - (i - xCoord)];
+                if (startState == 1 && _display[j][i] == 0) {
                     _registers.vRegisters[0xF] = 1;
                 }
             }

@@ -17,8 +17,14 @@ struct Chip8 final {
     void loadRom(const std::string& filename);
     void loadBytes(std::span<const uint8_t> bytes);
 
-    inline const std::array<std::array<bool, 32>, 64>& getDisplay() {
+    const std::array<std::array<bool, 64>, 32>& getDisplay() const {
         return _display;
+    }
+    const Registers& getRegisters() const {
+        return _registers;
+    }
+    uint16_t getProgramCounter() const {
+        return _programCounter;
     }
 
     void printDisplay();
@@ -28,7 +34,7 @@ struct Chip8 final {
 
   private:
     std::array<uint8_t, 4096> _memory{};
-    std::array<std::array<bool, 32>, 64> _display{}; // 64*32, on or off | white or black
+    std::array<std::array<bool, 64>, 32> _display{}; // 64*32, on or off | white or black
     std::stack<uint16_t> _stack{};
     Registers _registers{};
     uint16_t _programCounter{};

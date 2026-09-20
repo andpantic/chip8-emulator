@@ -19,8 +19,7 @@ int main() {
 
     while (!WindowShouldClose()) {
 
-        uint16_t instruction = chip8.fetchNextInstruction();
-        chip8.decodeAndExecute(instruction);
+        chip8.decodeAndExecute(chip8.fetchNextInstruction());
         std::this_thread::sleep_for(std::chrono::nanoseconds(WAIT_NS));
 
         BeginDrawing();
@@ -35,9 +34,9 @@ int main() {
 
 void RedrawDisplay(Chip8& chip8) {
     const auto display{chip8.getDisplay()};
-    for (auto i = 0; i < display.size(); i++) {
-        for (auto j = 0; j < display[0].size(); j++) {
-            DrawRectangle(i * 20, j * 20, 20, 20, (display[i][j]) ? WHITE : BLACK);
+    for (auto y = 0; y < display.size(); y++) {
+        for (auto x = 0; x < display[0].size(); x++) {
+            DrawRectangle(x * 20, y * 20, 20, 20, display[y][x] ? WHITE : BLACK);
         }
     }
 }
