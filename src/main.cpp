@@ -3,6 +3,8 @@
 #include <chrono>
 #include <thread>
 
+void RedrawDisplay(Chip8&);
+
 int main() {
     constexpr int screenWidth{1280};
     constexpr int screenHeight{640};
@@ -10,29 +12,32 @@ int main() {
     constexpr auto WAIT_NS = 1'000'000'000 / INSTRUCTIONS_PER_SECOND;
 
     InitWindow(screenWidth, screenHeight, "Chip-8");
-
     SetTargetFPS(60);
 
     Chip8& chip8 = Chip8::getInstance();
-    const auto instructionCount{chip8.getInstructionCount()};
 
-    auto i{0};
     while (!WindowShouldClose()) {
+
+        uint16_t instruction = chip8.fetchNextInstruction();
+        chip8.decodeAndExecute(instruction);
+        std::this_thread::sleep_for(std::chrono::nanoseconds(WAIT_NS));
+
         BeginDrawing();
-
-        ClearBackground(BLACK);
-
-        if (i < instructionCount) {
-            uint16_t instruction = chip8.fetchNextInstruction();
-            chip8.decodeAndExecute(instruction);
-            std::this_thread::sleep_for(std::chrono::nanoseconds(WAIT_NS));
-            i++;
-        }
+        RedrawDisplay(chip8);
         EndDrawing();
     }
 
     CloseWindow();
 
     return 0;
+}
+
+void RedrawDisplay(Chip8& chip8) {
+    const auto display{chip8.getDisplay()};
+    for (auto i = 0; i < display.size(); i++) {
+        for (auto j = 0; j < display[0].size(); j++) {
+            DrawRectangle(i * 20, j * 20, 20, 20, (display[i][j]) ? WHITE : BLACK);
+        }
+    }
 }
 

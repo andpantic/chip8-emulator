@@ -1,5 +1,6 @@
 #include "internals.h"
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -44,7 +45,6 @@ void Chip8::loadRom(const std::string& file) {
         romFile.get(byte);
         _memory[byteAddress++] = byte;
     }
-    _instructionCount = (byteAddress - PROGRAM_ADDRESS) / 2;
     romFile.close();
 }
 
@@ -66,6 +66,7 @@ uint16_t Chip8::fetchNextInstruction() {
 }
 
 void Chip8::decodeAndExecute(uint16_t instruction) {
+    assert(_programCounter <= 0xFFF);
     const auto instructionCategory{(instruction & 0xF000) >> 12};
     const auto x{(instruction & 0x0F00) >> 8};
     const auto y{(instruction & 0x00F0) >> 4};
@@ -94,19 +95,19 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
         break;
     case 0xD: // DXYN
     {
-        const auto xCoord{_registers.vRegisters[x] % 64};
-        const auto yCoord{_registers.vRegisters[y] % 32};
+        const auto xCoord{_registers.vRegisters[x] & 63};
+        const auto yCoord{_registers.vRegisters[y] & 31};
         _registers.vRegisters[0xF] = 0;
         const auto spriteLocation{_registers.indexRegister};
         for (auto i = xCoord; i < xCoord + 8; i++) {
-            if (i > 63)
+            if (i > 0x3F)
                 break;
             for (auto j = yCoord; j < yCoord + n; j++) {
-                if (j > 31)
+                if (j > 0x1F)
                     break;
                 std::bitset<8> spriteByte{_memory[spriteLocation + j - yCoord]};
                 const auto startState{_display[i][j]};
-                _display[i][j] = startState ^ spriteByte[i - xCoord];
+                _display[i][j] = startState ^ spriteByte[7 - (i - xCoord)];
                 if (startState == 1 && _display[i][j] == 0) {
                     _registers.vRegisters[0xF] = 1;
                 }

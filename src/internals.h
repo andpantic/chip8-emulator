@@ -21,9 +21,12 @@ struct Chip8 final {
 
     uint16_t fetchNextInstruction();
     void decodeAndExecute(uint16_t instruction);
-    inline uint16_t getInstructionCount() {
-        return _instructionCount;
+
+    inline const std::array<std::array<bool, 32>, 64>& getDisplay() {
+        return _display;
     }
+
+    // debug
     void printDisplay();
 
   private:
@@ -34,7 +37,6 @@ struct Chip8 final {
     uint16_t _programCounter{};
     uint8_t _delayTimer{};
     uint8_t _soundTimer{};
-    uint16_t _instructionCount{};
 
     Chip8();
     ~Chip8() = default;
