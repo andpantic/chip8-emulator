@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <span>
 #include <stack>
 
 struct Registers final {
@@ -13,7 +14,8 @@ struct Chip8 final {
   public:
     uint16_t fetchNextInstruction();
     void decodeAndExecute(uint16_t instruction);
-    void loadRom(const std::string& file);
+    void loadRom(const std::string& filename);
+    void loadBytes(std::span<const uint8_t> bytes);
 
     inline const std::array<std::array<bool, 32>, 64>& getDisplay() {
         return _display;

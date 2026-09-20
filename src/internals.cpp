@@ -6,6 +6,8 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <iterator>
+#include <vector>
 
 namespace {
     // each font is 4 pixels wide, 5 pixels tall
@@ -33,21 +35,6 @@ namespace {
 
 } // namespace
 
-void Chip8::loadRom(const std::string& file) {
-    std::ifstream romFile(file, std::ios::in | std::ios::binary);
-    if (!romFile) {
-        std::cerr << "Error opening ROM file: " << file << " | " << strerror(errno) << "\n";
-        return;
-    }
-    auto byteAddress{PROGRAM_ADDRESS};
-    while (!romFile.eof()) {
-        char byte{};
-        romFile.get(byte);
-        _memory[byteAddress++] = byte;
-    }
-    romFile.close();
-}
-
 Chip8::Chip8() {
     // populate fonts
     auto fontAddress{FONTS_ADDRESS};
@@ -55,6 +42,39 @@ Chip8::Chip8() {
         _memory[fontAddress++] = fonts.at(i);
     }
     _programCounter = PROGRAM_ADDRESS;
+}
+
+void Chip8::loadRom(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error opening ROM file: " << filename << " | " << strerror(errno) << "\n";
+        return;
+    }
+    file.unsetf(std::ios::skipws);
+
+    std::streampos fileSize;
+
+    file.seekg(0, std::ios::end);
+    fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<uint8_t> bytes;
+    bytes.reserve(fileSize);
+
+    bytes.insert(bytes.begin(), std::istream_iterator<uint8_t>(file),
+                 std::istream_iterator<uint8_t>());
+
+    loadBytes(bytes);
+
+    file.close();
+}
+
+void Chip8::loadBytes(std::span<const uint8_t> bytes) {
+    assert(bytes.size() + PROGRAM_ADDRESS <= 4096);
+    auto byteAddress{PROGRAM_ADDRESS};
+    for (const auto byte : bytes) {
+        _memory[byteAddress++] = byte;
+    }
 }
 
 uint16_t Chip8::fetchNextInstruction() {
