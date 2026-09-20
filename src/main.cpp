@@ -14,7 +14,8 @@ int main() {
     InitWindow(screenWidth, screenHeight, "Chip-8");
     SetTargetFPS(60);
 
-    Chip8& chip8 = Chip8::getInstance();
+    Chip8 chip8;
+    chip8.loadRom("roms/IBM Logo.ch8");
 
     while (!WindowShouldClose()) {
 

@@ -55,7 +55,6 @@ Chip8::Chip8() {
         _memory[fontAddress++] = fonts.at(i);
     }
     _programCounter = PROGRAM_ADDRESS;
-    Chip8::loadRom("roms/IBM Logo.ch8");
 }
 
 uint16_t Chip8::fetchNextInstruction() {
