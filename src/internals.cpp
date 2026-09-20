@@ -96,11 +96,18 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
     case 0x0:
         if (y == 0xE) {
             if (n == 0) { // 00E0
-                _display = {0};
+                _display = {};
+            } else if (n == 0xE) { // 00EE
+                _programCounter = _stack.top();
+                _stack.pop();
             }
         }
         break;
     case 0x1: // 1NNN
+        _programCounter = nnn;
+        break;
+    case 0x2: // 2NNN
+        _stack.push(_programCounter);
         _programCounter = nnn;
         break;
     case 0x6: // 6XNN
@@ -134,6 +141,8 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
         }
     } break;
     default:
+        std::cout << "Unknown instruction encountered: " << std::hex
+                  << static_cast<int>(instruction) << "\n";
         break;
     }
 }

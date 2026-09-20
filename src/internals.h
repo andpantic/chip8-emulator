@@ -23,6 +23,9 @@ struct Chip8 final {
     const Registers& getRegisters() const {
         return _registers;
     }
+    const std::stack<uint16_t>& getStack() const {
+        return _stack;
+    }
     uint16_t getProgramCounter() const {
         return _programCounter;
     }

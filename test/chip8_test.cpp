@@ -103,3 +103,27 @@ TEST(Instruction_ANNN, SetsIndexRegisterToNNN) {
     EXPECT_EQ(chip8.getRegisters().indexRegister, 0xABC);
 }
 
+TEST(Instruction_2NNN, CallsSubroutineAtMemoryLocationNNN) {
+    Chip8 chip8;
+    constexpr std::array<uint8_t, 2> rom{0x2A, 0xBC};
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    run(chip8, rom, 1);
+    EXPECT_EQ(chip8.getProgramCounter(), 0xABC);
+    EXPECT_EQ(chip8.getStack().top(), 0x202);
+}
+
+TEST(Instruction_00EE, ReturnsFromSubroutine) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x22, 0x04, // 2204
+        0x00, 0xE0, // 00E0
+        0x00, 0xEE, // 00EE
+    };
+    // clang-format on
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    run(chip8, rom, 2);
+    EXPECT_TRUE(chip8.getStack().empty());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x202);
+}
+
