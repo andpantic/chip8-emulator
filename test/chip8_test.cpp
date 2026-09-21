@@ -127,3 +127,75 @@ TEST(Instruction_00EE, ReturnsFromSubroutine) {
     EXPECT_EQ(chip8.getProgramCounter(), 0x202);
 }
 
+TEST(Instruction_3XNN, SkipsInstructionIfVxEqualsNN) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0x61, 0x25, // 6125, set v1 to 25
+        0x31, 0x25, // 3125, skip if v1 == 25
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), 0x25);
+    EXPECT_EQ(chip8.getProgramCounter(), 0x206);
+}
+
+TEST(Instruction_4XNN, SkipsInstructionIfVxNotEqualsNN) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x61, 0x25, // 6125, set v1 to 25
+        0x41, 0x25, // 4125, skip if v1 != 25
+        0x41, 0xAB, // 41AB, skip if v1 != AB
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), 0x25);
+    EXPECT_EQ(chip8.getProgramCounter(), 0x204);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x208);
+}
+
+TEST(Instruction_5XY0, SkipsInstructionIfVxEqualsVY) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 10> rom{
+        0x61, 0x25, // 6125, set v1 to 25
+        0x62, 0x26, // 6225, set v2 to 25
+        0x51, 0x20, // 5120, skip if v1 == v2
+        0x62, 0x25, // 6225, set v2 to 25
+        0x51, 0x20, // 5120, skip if v1 == v2
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_NE(chip8.getRegisters().vRegisters.at(0x1), chip8.getRegisters().vRegisters.at(0x2));
+    EXPECT_EQ(chip8.getProgramCounter(), 0x204);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x206);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), chip8.getRegisters().vRegisters.at(0x2));
+    EXPECT_EQ(chip8.getProgramCounter(), 0x20C);
+}
+
+TEST(Instruction_9XY0, SkipsInstructionIfVxNotEqualsVY) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 10> rom{
+        0x61, 0x25, // 6125, set v1 to 25
+        0x62, 0x25, // 6225, set v2 to 25
+        0x91, 0x20, // 9120, skip if v1 != v2
+        0x61, 0xAB, // 61AB, set v1 to AB
+        0x91, 0x20, // 9120, skip if v1 != v2
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), chip8.getRegisters().vRegisters.at(0x2));
+    EXPECT_EQ(chip8.getProgramCounter(), 0x204);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x206);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_NE(chip8.getRegisters().vRegisters.at(0x1), chip8.getRegisters().vRegisters.at(0x2));
+    EXPECT_EQ(chip8.getProgramCounter(), 0x20C);
+}

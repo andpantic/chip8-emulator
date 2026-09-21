@@ -73,13 +73,13 @@ void Chip8::loadBytes(std::span<const uint8_t> bytes) {
     assert(bytes.size() + PROGRAM_ADDRESS <= 4096);
     auto byteAddress{PROGRAM_ADDRESS};
     for (const auto byte : bytes) {
-        _memory[byteAddress++] = byte;
+        _memory.at(byteAddress++) = byte;
     }
 }
 
 uint16_t Chip8::fetchNextInstruction() {
-    uint16_t instruction{
-        static_cast<uint16_t>((_memory[_programCounter] << 8) | _memory[_programCounter + 1])};
+    uint16_t instruction{static_cast<uint16_t>((_memory.at(_programCounter) << 8) |
+                                               _memory.at(_programCounter + 1))};
     _programCounter += 2;
     return instruction;
 }
@@ -110,20 +110,36 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
         _stack.push(_programCounter);
         _programCounter = nnn;
         break;
+    case 0x3: // 3XNN
+        if (_registers.vRegisters.at(x) == nn)
+            _programCounter += 2;
+        break;
+    case 0x4: // 4XNN
+        if (_registers.vRegisters.at(x) != nn)
+            _programCounter += 2;
+        break;
+    case 0x5: // 5XY0
+        if (n == 0 && _registers.vRegisters.at(x) == _registers.vRegisters.at(y))
+            _programCounter += 2;
+        break;
     case 0x6: // 6XNN
-        _registers.vRegisters[x] = nn;
+        _registers.vRegisters.at(x) = nn;
         break;
     case 0x7: // 7XNN
-        _registers.vRegisters[x] += nn;
+        _registers.vRegisters.at(x) += nn;
+        break;
+    case 0x9: // 9XY0
+        if (n == 0 && _registers.vRegisters.at(x) != _registers.vRegisters.at(y))
+            _programCounter += 2;
         break;
     case 0xA: // ANNN
         _registers.indexRegister = nnn;
         break;
     case 0xD: // DXYN
     {
-        const auto xCoord{_registers.vRegisters[x] & 63};
-        const auto yCoord{_registers.vRegisters[y] & 31};
-        _registers.vRegisters[0xF] = 0;
+        const auto xCoord{_registers.vRegisters.at(x) & 63};
+        const auto yCoord{_registers.vRegisters.at(y) & 31};
+        _registers.vRegisters.at(0xF) = 0;
         const auto spriteLocation{_registers.indexRegister};
         for (auto i = xCoord; i < xCoord + 8; i++) {
             if (i > 0x3F)
@@ -131,11 +147,11 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
             for (auto j = yCoord; j < yCoord + n; j++) {
                 if (j > 0x1F)
                     break;
-                std::bitset<8> spriteByte{_memory[spriteLocation + j - yCoord]};
+                std::bitset<8> spriteByte{_memory.at(spriteLocation + j - yCoord)};
                 const auto startState{_display[j][i]};
                 _display[j][i] = startState ^ spriteByte[7 - (i - xCoord)];
                 if (startState == 1 && _display[j][i] == 0) {
-                    _registers.vRegisters[0xF] = 1;
+                    _registers.vRegisters.at(0xF) = 1;
                 }
             }
         }
