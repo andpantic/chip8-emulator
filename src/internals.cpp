@@ -32,6 +32,7 @@ namespace {
 
     constexpr auto FONTS_ADDRESS{0x50};
     constexpr auto PROGRAM_ADDRESS{0x200};
+    constexpr auto LEGACY_SYSTEM{false};
 
 } // namespace
 
@@ -127,6 +128,68 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
         break;
     case 0x7: // 7XNN
         _registers.vRegisters.at(x) += nn;
+        break;
+    case 0x8:
+        switch (n) {
+        case 0x0: // 8XY0
+            _registers.vRegisters.at(x) = _registers.vRegisters.at(y);
+            break;
+        case 0x1: // 8XY1
+            _registers.vRegisters.at(x) |= _registers.vRegisters.at(y);
+            break;
+        case 0x2: // 8XY2
+            _registers.vRegisters.at(x) &= _registers.vRegisters.at(y);
+            break;
+        case 0x3: // 8XY3
+            _registers.vRegisters.at(x) ^= _registers.vRegisters.at(y);
+            break;
+        case 0x4: // 8XY4
+        {
+            const auto vx = _registers.vRegisters.at(x);
+            const auto vy = _registers.vRegisters.at(y);
+            _registers.vRegisters.at(x) = vx + vy;
+            _registers.vRegisters.at(0xF) = (vx + vy > 255) ? 1 : 0;
+
+        } break;
+        case 0x5: // 8XY5
+        {
+            const auto vx = _registers.vRegisters.at(x);
+            const auto vy = _registers.vRegisters.at(y);
+            _registers.vRegisters.at(x) = vx - vy;
+            _registers.vRegisters.at(0xF) = (vx >= vy) ? 1 : 0;
+
+        } break;
+        case 0x6: // 8XY6
+        {
+            if (LEGACY_SYSTEM) {
+                _registers.vRegisters.at(x) = _registers.vRegisters.at(y);
+            }
+            const auto vx = _registers.vRegisters.at(x);
+            const auto vy = _registers.vRegisters.at(y);
+            _registers.vRegisters.at(x) = vx >> 1;
+            _registers.vRegisters.at(0xF) = vx & 1;
+        } break;
+        case 0x7: // 8XY7
+        {
+            const auto vx = _registers.vRegisters.at(x);
+            const auto vy = _registers.vRegisters.at(y);
+            _registers.vRegisters.at(x) = vy - vx;
+            _registers.vRegisters.at(0xF) = (vy >= vx) ? 1 : 0;
+
+        } break;
+        case 0xE: // 8XYE
+        {
+            if (LEGACY_SYSTEM) {
+                _registers.vRegisters.at(x) = _registers.vRegisters.at(y);
+            }
+            const auto vx = _registers.vRegisters.at(x);
+            const auto vy = _registers.vRegisters.at(y);
+            _registers.vRegisters.at(x) = vx << 1;
+            _registers.vRegisters.at(0xF) = vx >> 7;
+        } break;
+        default:
+            break;
+        }
         break;
     case 0x9: // 9XY0
         if (n == 0 && _registers.vRegisters.at(x) != _registers.vRegisters.at(y))

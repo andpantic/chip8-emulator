@@ -1,4 +1,5 @@
 #include "internals.h"
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace {
@@ -198,4 +199,211 @@ TEST(Instruction_9XY0, SkipsInstructionIfVxNotEqualsVY) {
     chip8.decodeAndExecute(chip8.fetchNextInstruction());
     EXPECT_NE(chip8.getRegisters().vRegisters.at(0x1), chip8.getRegisters().vRegisters.at(0x2));
     EXPECT_EQ(chip8.getProgramCounter(), 0x20C);
+}
+
+TEST(Instruction_8XY0, VxSetToVy) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0x61, 0xAB, // 61AB, set v1 to AB
+        0x80, 0x10, // 8010, set value of v0 to v1
+    };
+    // clang-format on
+    run(chip8, rom, 1);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), 0);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), chip8.getRegisters().vRegisters.at(0x1));
+}
+
+TEST(Instruction_8XY1, VxSetToBinaryORwithVy) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x47, // 6047, set v0 to 47
+        0x61, 0xCD, // 61CD, set v1 to CD
+        0x80, 0x11, // 8011, set value of v0 to (v0 | v1)
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0x47 | 0xCD;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), 0xCD);
+}
+
+TEST(Instruction_8XY2, VxSetToBinaryANDwithVy) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x47, // 6047, set v0 to 47
+        0x61, 0xCD, // 61CD, set v1 to CD
+        0x80, 0x12, // 8012, set value of v0 to (v0 & v1)
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0x47 & 0xCD;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), 0xCD);
+}
+
+TEST(Instruction_8XY3, VxSetToBinaryXORwithVy) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x47, // 6047, set v0 to 47
+        0x61, 0xCD, // 61CD, set v1 to CD
+        0x80, 0x13, // 8013, set value of v0 to (v0 ^ v1)
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0x47 ^ 0xCD;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0x1), 0xCD);
+}
+
+TEST(Instruction_8XY4, VxSetToVxPlusVyNoOverflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x12, // 6012, set v0 to 12
+        0x61, 0x23, // 6123 set v1 to 23
+        0x80, 0x14, // 8014, set v0 to v0+v1
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0x12 + 0x23;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 0);
+}
+
+TEST(Instruction_8XY4, VxSetToVxPlusVyWithOverflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0xCD, // 60CD, set v0 to CD
+        0x61, 0xAF, // 61AF set v1 to AF
+        0x80, 0x14, // 8014, set v0 to v0+v1
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = static_cast<uint8_t>(0xCD + 0xAF);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
+}
+
+TEST(Instruction_8XY4, VxSetToVxPlusVFasOperandNoOverflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x05, // 6005, set v0 to 05
+        0x6F, 0x03, // 6F03 set vF to 03
+        0x80, 0xF4, // 80F4, set v0 to v0+vf
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0x05 + 0x03;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 0);
+}
+
+TEST(Instruction_8XY4, VxSetToVxPlusVFasOperandWithOverflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0xAB, // 60AB, set v0 to AB
+        0x6F, 0xDF, // 6FDF set vF to DF
+        0x80, 0xF4, // 80F4, set v0 to v0+vf
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = static_cast<uint8_t>(0xAB + 0xDF);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
+}
+
+TEST(Instruction_8XY5, VxSetToVxMinusVyNoUnderflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0xCD, // 60CD, set v0 to CD
+        0x61, 0x12, // 6112 set v1 to 12
+        0x80, 0x15, // 8015, set v0 to v0-v1
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0xCD - 0x12;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
+}
+
+TEST(Instruction_8XY5, VxSetToVxMinusVyWithUnderflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x12, // 6012, set v0 to 12
+        0x61, 0xCD, // 61CD set v1 to CD
+        0x80, 0x15, // 8015, set v0 to v0-v1
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = static_cast<uint8_t>(0x12 - 0xCD);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 0);
+}
+
+TEST(Instruction_8XY6, VxShiftsRightOneBit) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0xFB, // 60FB, set v0 to 22
+        0x80, 0x16, // 8016, set v0 to v0>>1
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    const auto result = static_cast<uint8_t>(0xFB >> 1);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
+}
+
+TEST(Instruction_8XY7, VxSetToVyMinusVxNoUnderflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x22, // 6022, set v0 to 22
+        0x61, 0xAB, // 61AB set v1 to AB
+        0x80, 0x17, // 8015, set v0 to v0-v1
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = 0xAB - 0x22;
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
+}
+
+TEST(Instruction_8XY7, VxSetToVyMinusVxWithUnderflow) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0xAB, // 6022, set v0 to 22
+        0x61, 0x22, // 61AB set v1 to AB
+        0x80, 0x17, // 8015, set v0 to v0-v1
+    };
+    // clang-format on
+    run(chip8, rom, 3);
+    const auto result = static_cast<uint8_t>(0x22 - 0xAB);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 0);
+}
+
+TEST(Instruction_8XYE, VxShiftsLeftOneBit) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0xFB, // 60FB, set v0 to 22
+        0x80, 0x1E, // 801E, set v0 to v0<<1
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    const auto result = static_cast<uint8_t>(0xFB << 1);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
 }
