@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <random>
 #include <vector>
 
 namespace {
@@ -202,6 +203,12 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
         _programCounter =
             (LEGACY_SYSTEM) ? _registers.vRegisters.at(0) + nnn : _registers.vRegisters.at(x) + nnn;
         break;
+    case 0xC: // CXNN
+    {
+        std::uniform_int_distribution<std::mt19937::result_type> dist(0, 255);
+        _registers.vRegisters.at(x) = dist(_rng) & nn;
+
+    } break;
     case 0xD: // DXYN
     {
         const auto xCoord{_registers.vRegisters.at(x) & 63};
@@ -223,6 +230,15 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
             }
         }
     } break;
+    case 0xF:
+        switch (nn) {
+        case 0x1E: // FX1E
+            _registers.indexRegister += _registers.vRegisters.at(x);
+            break;
+        default:
+            break;
+        }
+        break;
     default:
         std::cout << "Unknown instruction encountered: " << std::hex
                   << static_cast<int>(instruction) << "\n";

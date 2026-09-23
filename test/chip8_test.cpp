@@ -353,7 +353,7 @@ TEST(Instruction_8XY5, VxSetToVxMinusVyWithUnderflow) {
 TEST(Instruction_8XY6, VxShiftsRightOneBit) {
     Chip8 chip8;
     // clang-format off
-    constexpr std::array<uint8_t, 6> rom{
+    constexpr std::array<uint8_t, 4> rom{
         0x60, 0xFB, // 60FB, set v0 to 22
         0x80, 0x16, // 8016, set v0 to v0>>1
     };
@@ -397,7 +397,7 @@ TEST(Instruction_8XY7, VxSetToVyMinusVxWithUnderflow) {
 TEST(Instruction_8XYE, VxShiftsLeftOneBit) {
     Chip8 chip8;
     // clang-format off
-    constexpr std::array<uint8_t, 6> rom{
+    constexpr std::array<uint8_t, 4> rom{
         0x60, 0xFB, // 60FB, set v0 to 22
         0x80, 0x1E, // 801E, set v0 to v0<<1
     };
@@ -420,3 +420,21 @@ TEST(Instruction_BNNN, JumpsPcToVxPlusNNN) {
     const auto result = 0x43 + 0x12;
     EXPECT_EQ(chip8.getProgramCounter(), result);
 }
+
+TEST(Instruction_FX1E, IndexRegisterIncrementsByVx) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x43, // 6043, set v0 to 0x43
+        0xA0, 0x12, // A012, set index register to nnn (0x12)
+        0xF0, 0x1E, // F01E, index register += v0
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), 0x43);
+    EXPECT_EQ(chip8.getRegisters().indexRegister, 0x12);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    const auto result = 0x43 + 0x12;
+    EXPECT_EQ(chip8.getRegisters().indexRegister, result);
+}
+

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <random>
 #include <span>
 #include <stack>
 
@@ -40,6 +41,7 @@ struct Chip8 final {
     std::array<std::array<bool, 64>, 32> _display{}; // 64*32, on or off | white or black
     std::stack<uint16_t> _stack{};
     Registers _registers{};
+    std::mt19937 _rng{std::random_device{}()};
     uint16_t _programCounter{};
     uint8_t _delayTimer{};
     uint8_t _soundTimer{};
