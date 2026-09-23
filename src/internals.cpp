@@ -198,6 +198,10 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
     case 0xA: // ANNN
         _registers.indexRegister = nnn;
         break;
+    case 0xB: // BNNN (BXNN)
+        _programCounter =
+            (LEGACY_SYSTEM) ? _registers.vRegisters.at(0) + nnn : _registers.vRegisters.at(x) + nnn;
+        break;
     case 0xD: // DXYN
     {
         const auto xCoord{_registers.vRegisters.at(x) & 63};
@@ -210,7 +214,7 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
             for (auto j = yCoord; j < yCoord + n; j++) {
                 if (j > 0x1F)
                     break;
-                std::bitset<8> spriteByte{_memory.at(spriteLocation + j - yCoord)};
+                const std::bitset<8> spriteByte{_memory.at(spriteLocation + j - yCoord)};
                 const auto startState{_display[j][i]};
                 _display[j][i] = startState ^ spriteByte[7 - (i - xCoord)];
                 if (startState == 1 && _display[j][i] == 0) {

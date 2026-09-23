@@ -407,3 +407,16 @@ TEST(Instruction_8XYE, VxShiftsLeftOneBit) {
     EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), result);
     EXPECT_EQ(chip8.getRegisters().vRegisters.at(0xF), 1);
 }
+
+TEST(Instruction_BNNN, JumpsPcToVxPlusNNN) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x43, // 6043, set v0 to 43
+        0xB0, 0x12, // B012, set pc to v0 + nnn (012)
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    const auto result = 0x43 + 0x12;
+    EXPECT_EQ(chip8.getProgramCounter(), result);
+}
