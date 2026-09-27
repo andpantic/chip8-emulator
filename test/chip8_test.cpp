@@ -546,3 +546,78 @@ TEST(Instruction_FX0A, BlocksInstructionUntilKeyPressed) {
     EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), 0xB);
 }
 
+TEST(Instruction_FX29, SetsIndexRegisterToFontAddressInVx) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0x60, 0x0C, // 600C, set v0 to 0xC
+        0xF0, 0x29, // F029, set index register to hex character in v0
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    const auto charAddress = 0x50 + 0xC * 5;
+    EXPECT_EQ(chip8.getRegisters().indexRegister, charAddress);
+}
+
+TEST(Instruction_FX33, StoresDecimalDigitsOfVxIntoMemory) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0x60, 0x7F, // 607F, set v0 to 0x7F (decimal 127)
+        0xF0, 0x33, // F033, set memory starting with index register to decimal digits of v0
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    const auto i = chip8.getRegisters().indexRegister;
+    EXPECT_EQ(chip8.getMemory().at(i), 1);
+    EXPECT_EQ(chip8.getMemory().at(i + 1), 2);
+    EXPECT_EQ(chip8.getMemory().at(i + 2), 7);
+}
+
+TEST(Instruction_FX55, StoreFromV0toVxInMemory) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 14> rom{
+        0xAA, 0xBC, // AABC, set index register to 0xABC
+        0x60, 0x1C, // 601C, set v0 to 0x1C
+        0x61, 0xAF, // 61AF, set v1 to 0xAF
+        0x62, 0x02, // 6202, set v2 to 0x02
+        0x63, 0x72, // 6372, set v3 to 0x72
+        0x64, 0x23, // 6423, set v4 to 0x23
+        0xF4, 0x55, // F055, set memory at index register to values from v0 to vx (inclusive)
+    };
+    // clang-format on
+    run(chip8, rom, 7);
+    const auto i = chip8.getRegisters().indexRegister;
+    EXPECT_EQ(chip8.getMemory().at(i), 0x1C);
+    EXPECT_EQ(chip8.getMemory().at(i + 1), 0xAF);
+    EXPECT_EQ(chip8.getMemory().at(i + 2), 0x02);
+    EXPECT_EQ(chip8.getMemory().at(i + 3), 0x72);
+    EXPECT_EQ(chip8.getMemory().at(i + 4), 0x23);
+}
+
+TEST(Instruction_FX65, StoreFromMemoryIntoV0toVx) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0xA0, 0x50, // A050, set index register to 0x50 (fonts start)
+        0xF4, 0x65, // F065, set registers from v0 to v4 (inclusive) to memory at index register
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    const auto i = chip8.getRegisters().indexRegister;
+    // font for sprite 0 in memory
+    // 0xF0, 0x90, 0x90, 0x90, 0xF0
+    EXPECT_EQ(chip8.getMemory().at(i), 0xF0);
+    EXPECT_EQ(chip8.getMemory().at(i + 1), 0x90);
+    EXPECT_EQ(chip8.getMemory().at(i + 2), 0x90);
+    EXPECT_EQ(chip8.getMemory().at(i + 3), 0x90);
+    EXPECT_EQ(chip8.getMemory().at(i + 4), 0xF0);
+    // stored in registers?
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), 0xF0);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(1), 0x90);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(2), 0x90);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(3), 0x90);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(4), 0xF0);
+}
+

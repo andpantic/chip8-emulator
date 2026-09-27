@@ -271,6 +271,34 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
         case 0x1E: // FX1E
             _registers.indexRegister += _registers.vRegisters.at(x);
             break;
+        case 0x29: // FX29
+            _registers.indexRegister = FONTS_ADDRESS + (_registers.vRegisters.at(x) & 0xF) * 5;
+            break;
+        case 0x33: // FX33
+        {
+            const auto number = _registers.vRegisters.at(x);
+            _memory.at(_registers.indexRegister) = number / 100;
+            _memory.at(_registers.indexRegister + 1) = (number / 10) % 10;
+            _memory.at(_registers.indexRegister + 2) = number % 10;
+        } break;
+        case 0x55: // FX55
+            for (int i = 0; i <= x; i++) {
+                if (LEGACY_SYSTEM) {
+                    _memory.at(_registers.indexRegister++) = _registers.vRegisters.at(i);
+                } else {
+                    _memory.at(_registers.indexRegister + i) = _registers.vRegisters.at(i);
+                }
+            }
+            break;
+        case 0x65: // FX65
+            for (int i = 0; i <= x; i++) {
+                if (LEGACY_SYSTEM) {
+                    _registers.vRegisters.at(i) = _memory.at(_registers.indexRegister++);
+                } else {
+                    _registers.vRegisters.at(i) = _memory.at(_registers.indexRegister + i);
+                }
+            }
+            break;
         default:
             break;
         }

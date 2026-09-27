@@ -19,6 +19,9 @@ struct Chip8 final {
     void loadBytes(std::span<const uint8_t> bytes);
     void tickTimers();
 
+    const std::array<uint8_t, 4096>& getMemory() const {
+        return _memory;
+    }
     const std::array<std::array<bool, 64>, 32>& getDisplay() const {
         return _display;
     }
