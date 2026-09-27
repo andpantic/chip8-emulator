@@ -438,3 +438,50 @@ TEST(Instruction_FX1E, IndexRegisterIncrementsByVx) {
     EXPECT_EQ(chip8.getRegisters().indexRegister, result);
 }
 
+TEST(Instruction_FX07, SetsVxToDelayTimerValue) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x3C, // 603C, set v0 to 0x3C (decimal 60)
+        0xF0, 0x15, // F015, set delay timer value to v0
+        0xF1, 0x07, // F107, set v1 to delay timer value
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getDelayTimerValue(), 0x3C);
+    for (int i = 0; i < 30; i++)
+        chip8.tickTimers();
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getDelayTimerValue(), 30);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(1), 30);
+}
+
+TEST(Instruction_FX15, SetsDelayTimerToVx) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0x60, 0x3C, // 603C, set v0 to 0x3C (decimal 60)
+        0xF0, 0x15, // F015, set delay timer value to v0
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getDelayTimerValue(), 0x3C);
+    for (int i = 0; i < 100; i++)
+        chip8.tickTimers();
+    EXPECT_EQ(chip8.getDelayTimerValue(), 0);
+}
+
+TEST(Instruction_FX18, SetsSoundTimerToVx) {
+    Chip8 chip8;
+    // clang-format off
+    constexpr std::array<uint8_t, 4> rom{
+        0x60, 0x3C, // 603C, set v0 to 0x3C (decimal 60)
+        0xF0, 0x18, // F018, set sound timer value to v0
+    };
+    // clang-format on
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getSoundTimerValue(), 0x3C);
+    for (int i = 0; i < 100; i++)
+        chip8.tickTimers();
+    EXPECT_EQ(chip8.getSoundTimerValue(), 0);
+}

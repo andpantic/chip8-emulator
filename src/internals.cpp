@@ -232,6 +232,15 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
     } break;
     case 0xF:
         switch (nn) {
+        case 0x07: // FX07
+            _registers.vRegisters.at(x) = _delayTimerValue;
+            break;
+        case 0x15: // FX15
+            _delayTimerValue = _registers.vRegisters.at(x);
+            break;
+        case 0x18: // FX18
+            _soundTimerValue = _registers.vRegisters.at(x);
+            break;
         case 0x1E: // FX1E
             _registers.indexRegister += _registers.vRegisters.at(x);
             break;
@@ -244,6 +253,13 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
                   << static_cast<int>(instruction) << "\n";
         break;
     }
+}
+
+void Chip8::tickTimers() {
+    if (_delayTimerValue > 0)
+        --_delayTimerValue;
+    if (_soundTimerValue > 0)
+        --_soundTimerValue;
 }
 
 void Chip8::printDisplay() {

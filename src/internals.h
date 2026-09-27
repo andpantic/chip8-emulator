@@ -17,6 +17,7 @@ struct Chip8 final {
     void decodeAndExecute(uint16_t instruction);
     void loadRom(const std::string& filename);
     void loadBytes(std::span<const uint8_t> bytes);
+    void tickTimers();
 
     const std::array<std::array<bool, 64>, 32>& getDisplay() const {
         return _display;
@@ -29,6 +30,12 @@ struct Chip8 final {
     }
     uint16_t getProgramCounter() const {
         return _programCounter;
+    }
+    uint8_t getDelayTimerValue() const {
+        return _delayTimerValue;
+    }
+    uint8_t getSoundTimerValue() const {
+        return _soundTimerValue;
     }
 
     void printDisplay();
@@ -43,7 +50,7 @@ struct Chip8 final {
     Registers _registers{};
     std::mt19937 _rng{std::random_device{}()};
     uint16_t _programCounter{};
-    uint8_t _delayTimer{};
-    uint8_t _soundTimer{};
+    uint8_t _delayTimerValue{};
+    uint8_t _soundTimerValue{};
 };
 

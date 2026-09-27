@@ -6,9 +6,10 @@
 void RedrawDisplay(Chip8&);
 
 int main() {
-    constexpr int screenWidth{1280};
-    constexpr int screenHeight{640};
-    constexpr auto INSTRUCTIONS_PER_SECOND{800};
+    constexpr auto screenWidth{1280};
+    constexpr auto screenHeight{640};
+    constexpr auto INSTRUCTIONS_PER_SECOND{780};
+    constexpr auto DISPLAY_INTERRUPT_THRESHOLD{INSTRUCTIONS_PER_SECOND / 60};
     constexpr auto WAIT_NS = 1'000'000'000 / INSTRUCTIONS_PER_SECOND;
 
     InitWindow(screenWidth, screenHeight, "Chip-8");
@@ -17,14 +18,19 @@ int main() {
     Chip8 chip8;
     chip8.loadRom("roms/IBM Logo.ch8");
 
+    auto displayInterruptCounter{0};
     while (!WindowShouldClose()) {
 
         chip8.decodeAndExecute(chip8.fetchNextInstruction());
+        ++displayInterruptCounter;
+        if (displayInterruptCounter == DISPLAY_INTERRUPT_THRESHOLD) {
+            chip8.tickTimers();
+            BeginDrawing();
+            RedrawDisplay(chip8);
+            EndDrawing();
+            displayInterruptCounter = 0;
+        }
         std::this_thread::sleep_for(std::chrono::nanoseconds(WAIT_NS));
-
-        BeginDrawing();
-        RedrawDisplay(chip8);
-        EndDrawing();
     }
 
     CloseWindow();
