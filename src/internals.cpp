@@ -315,7 +315,6 @@ void Chip8::tickTimers() {
         --_delayTimerValue;
     if (_soundTimerValue > 0)
         --_soundTimerValue;
-    // TODO play sound while soundTimer > 0
 }
 
 void Chip8::printDisplay() {

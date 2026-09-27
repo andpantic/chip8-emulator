@@ -1,12 +1,17 @@
 #include "internals.h"
 #include "raylib.h"
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 void RedrawDisplay(Chip8&);
 std::array<bool, 16> GetPressedKeys();
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Missing ROM file argument, Usage: ./chip8_emulator <ROM file>\n";
+        return 1;
+    }
     constexpr auto screenWidth{1280};
     constexpr auto screenHeight{640};
     constexpr auto INSTRUCTIONS_PER_SECOND{780};
@@ -15,9 +20,11 @@ int main() {
 
     InitWindow(screenWidth, screenHeight, "Chip-8");
     SetTargetFPS(60);
+    InitAudioDevice();
+    Sound sound = LoadSound("sound/sound.wav");
 
     Chip8 chip8;
-    chip8.loadRom("roms/IBM Logo.ch8");
+    chip8.loadRom(argv[1]);
 
     auto displayInterruptCounter{0};
     while (!WindowShouldClose()) {
@@ -32,11 +39,15 @@ int main() {
             EndDrawing();
             displayInterruptCounter = 0;
         }
+        if (chip8.getSoundTimerValue() > 0) {
+            PlaySound(sound);
+        }
         std::this_thread::sleep_for(std::chrono::nanoseconds(WAIT_NS));
     }
+    UnloadSound(sound);
 
     CloseWindow();
-
+    CloseAudioDevice();
     return 0;
 }
 
