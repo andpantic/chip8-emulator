@@ -37,6 +37,9 @@ struct Chip8 final {
     uint8_t getSoundTimerValue() const {
         return _soundTimerValue;
     }
+    void setPressedKeys(std::array<bool, 16> keys) {
+        _keys = keys;
+    }
 
     void printDisplay();
 
@@ -46,6 +49,7 @@ struct Chip8 final {
   private:
     std::array<uint8_t, 4096> _memory{};
     std::array<std::array<bool, 64>, 32> _display{}; // 64*32, on or off | white or black
+    std::array<bool, 16> _keys{};
     std::stack<uint16_t> _stack{};
     Registers _registers{};
     std::mt19937 _rng{std::random_device{}()};

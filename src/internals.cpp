@@ -1,4 +1,5 @@
 #include "internals.h"
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstddef>
@@ -230,11 +231,37 @@ void Chip8::decodeAndExecute(uint16_t instruction) {
             }
         }
     } break;
+    case 0xE:
+        switch (nn) {
+        case 0x9E: // 0xEX9E
+            if (_keys.at(_registers.vRegisters.at(x) & 0xF)) {
+                _programCounter += 2;
+            }
+            break;
+        case 0xA1: // 0xEXA1
+            if (!(_keys.at(_registers.vRegisters.at(x) & 0xF))) {
+                _programCounter += 2;
+            }
+            break;
+        default:
+            break;
+        }
+        break;
     case 0xF:
         switch (nn) {
         case 0x07: // FX07
             _registers.vRegisters.at(x) = _delayTimerValue;
             break;
+        case 0x0A: // FX0A
+        {
+            const auto it{std::find(_keys.begin(), _keys.end(), true)};
+            if (it == _keys.end()) {
+                _programCounter -= 2;
+            } else {
+                _registers.vRegisters.at(x) =
+                    static_cast<uint8_t>(std::distance(_keys.begin(), it));
+            }
+        } break;
         case 0x15: // FX15
             _delayTimerValue = _registers.vRegisters.at(x);
             break;
@@ -260,6 +287,7 @@ void Chip8::tickTimers() {
         --_delayTimerValue;
     if (_soundTimerValue > 0)
         --_soundTimerValue;
+    // TODO play sound while soundTimer > 0
 }
 
 void Chip8::printDisplay() {

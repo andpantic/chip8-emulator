@@ -4,6 +4,7 @@
 #include <thread>
 
 void RedrawDisplay(Chip8&);
+std::array<bool, 16> GetPressedKeys();
 
 int main() {
     constexpr auto screenWidth{1280};
@@ -21,6 +22,7 @@ int main() {
     auto displayInterruptCounter{0};
     while (!WindowShouldClose()) {
 
+        chip8.setPressedKeys(GetPressedKeys());
         chip8.decodeAndExecute(chip8.fetchNextInstruction());
         ++displayInterruptCounter;
         if (displayInterruptCounter == DISPLAY_INTERRUPT_THRESHOLD) {
@@ -47,3 +49,29 @@ void RedrawDisplay(Chip8& chip8) {
     }
 }
 
+// Keyboard
+
+/**
+ * MAPPING HEX KEYBOARD KEYS
+ * 0x1 -> 1, 0x2 -> 2, 0x3 -> 3, 0xC -> 4,
+ * 0x4 -> Q, 0x5 -> W, 0x6 -> E, 0xD -> R,
+ * 0x7 -> A, 0x8 -> S, 0x9 -> D, 0xE -> F,
+ * 0xA -> Z, 0x0 -> X, 0xB -> C, 0xF -> V,
+ */
+
+// clang-format off
+constexpr std::array<int, 16> KEY_MAP{
+    KEY_X, KEY_ONE, KEY_TWO, KEY_THREE,
+    KEY_Q, KEY_W,   KEY_E,   KEY_A,
+    KEY_S, KEY_D,   KEY_Z,   KEY_C,
+    KEY_FOUR, KEY_R, KEY_F,  KEY_V,
+};
+// clang-format on
+
+std::array<bool, 16> GetPressedKeys() {
+    std::array<bool, 16> keys{};
+    for (int i = 0; i < 16; i++) {
+        keys[i] = IsKeyDown(KEY_MAP[i]);
+    }
+    return keys;
+}

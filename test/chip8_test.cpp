@@ -485,3 +485,64 @@ TEST(Instruction_FX18, SetsSoundTimerToVx) {
         chip8.tickTimers();
     EXPECT_EQ(chip8.getSoundTimerValue(), 0);
 }
+
+TEST(Instruction_EX9E, SkipsIfKeyIsPressed) {
+    Chip8 chip8;
+    std::array<bool, 16> pressedKeys{};
+    pressedKeys[1] = true;
+    chip8.setPressedKeys(pressedKeys);
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x01, // set v0 to 0x1
+        0xE6, 0x9E, // E69E, skip instruction if key in v6 is pressed
+        0xE0, 0x9E, // E09E, skip instruction if key in v0 is pressed
+    };
+    // clang-format on
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getProgramCounter(), 0x204);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x208);
+}
+
+TEST(Instruction_EXA1, SkipsIfKeyNotPressed) {
+    Chip8 chip8;
+    std::array<bool, 16> pressedKeys{};
+    pressedKeys[1] = true;
+    chip8.setPressedKeys(pressedKeys);
+    // clang-format off
+    constexpr std::array<uint8_t, 6> rom{
+        0x60, 0x01, // set v0 to 0x1
+        0xE0, 0xA1, // E0A1, skip instruction if key in v0 is NOT pressed
+        0xE6, 0xA1, // E6A1, skip instruction if key in v6 is NOT pressed
+    };
+    // clang-format on
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    run(chip8, rom, 2);
+    EXPECT_EQ(chip8.getProgramCounter(), 0x204);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x208);
+}
+
+TEST(Instruction_FX0A, BlocksInstructionUntilKeyPressed) {
+    Chip8 chip8;
+    std::array<bool, 16> pressedKeys{};
+    chip8.setPressedKeys(pressedKeys);
+    // clang-format off
+    constexpr std::array<uint8_t, 2> rom{
+        0xF0, 0x0A, // blocks execution until key is pressed
+    };
+    // clang-format on
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    run(chip8, rom, 1);
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x200);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), 0);
+    pressedKeys.at(0xB) = true;
+    chip8.setPressedKeys(pressedKeys);
+    chip8.decodeAndExecute(chip8.fetchNextInstruction());
+    EXPECT_EQ(chip8.getProgramCounter(), 0x202);
+    EXPECT_EQ(chip8.getRegisters().vRegisters.at(0), 0xB);
+}
+
