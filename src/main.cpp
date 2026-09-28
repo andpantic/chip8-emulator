@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     constexpr auto DISPLAY_INTERRUPT_THRESHOLD{INSTRUCTIONS_PER_SECOND / 60};
     constexpr auto WAIT_NS = 1'000'000'000 / INSTRUCTIONS_PER_SECOND;
 
-    InitWindow(screenWidth, screenHeight, "Chip-8");
+    InitWindow(screenWidth, screenHeight, "Chip-8 Emulator");
     SetTargetFPS(60);
     InitAudioDevice();
     Sound sound = LoadSound("sound/sound.wav");
